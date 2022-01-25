@@ -80,7 +80,7 @@ function HomePage() {
                         />
                         <Button
                             type='submit'
-                            label='Entrar'
+                            label='Enter'
                             fullWidth
                             disabled={!canEnter}
                             buttonColors={{
