@@ -115,7 +115,7 @@ function HomePage() {
                                 marginBottom: '16px',
                                 height: '166px',
                             }}
-                            src={ canEnter ? `https://github.com/${username}.png` : '' }
+                            src={canEnter ? `https://github.com/${username}.png` : ''}
                         />
                         <Text
                             variant="body4"
