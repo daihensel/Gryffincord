@@ -1,35 +1,7 @@
 import { Box, Button, Text, TextField, Image } from '@skynexui/components';
 import appConfig from '../config.json';
-
-function GlobalStyle() {
-    return (
-        <style global jsx>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          list-style: none;
-        }
-        body {
-          font-family: 'Open Sans', sans-serif;
-        }
-        /* App fit Height */ 
-        html, body, #__next {
-          min-height: 100vh;
-          display: flex;
-          flex: 1;
-        }
-        #__next {
-          flex: 1;
-        }
-        #__next > * {
-          flex: 1;
-        }
-        /* ./App fit Height */ 
-      `}</style>
-    );
-
-}
+import React from 'react';
+import { useRouter } from 'next/router';
 
 function Title(props) {
     const Tag = props.tag || 'h1';
@@ -46,11 +18,12 @@ function Title(props) {
 }
 
 function HomePage() {
-    const username = 'daihensel';
+    const [username, setUsername] = React.useState('daihensel');
+    const routing = useRouter();
+    const canEnter = username.length > 2;
 
     return (
         <>
-            <GlobalStyle />
             <Box
                 styleSheet={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -77,18 +50,24 @@ function HomePage() {
                     {/* Form */}
                     <Box
                         as="form"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            routing.push('/chat');
+                        }}
                         styleSheet={{
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                             width: { xs: '100%', sm: '50%' }, textAlign: 'center', marginBottom: '32px',
                         }}
                     >
-                        <Text variant="body3" styleSheet={{ color: appConfig.theme.colors.primary[300] }}>
+
+                        <Title tag="h5">{appConfig.title}</Title>
+                        <Text variant="body3" styleSheet={{ marginBottom: '32px', color: appConfig.theme.colors.primary[300] }}>
                             {appConfig.name}
                         </Text>
-                        <Title tag="h5">{appConfig.title}</Title>
 
                         <TextField
-                            styleSheet={{ marginTop: '32px' }}
+                            onChange={(event) => { setUsername(event.target.value) }}
+                            value={username}
                             fullWidth
                             textFieldColors={{
                                 neutral: {
@@ -103,6 +82,7 @@ function HomePage() {
                             type='submit'
                             label='Entrar'
                             fullWidth
+                            disabled={!canEnter}
                             buttonColors={{
                                 contrastColor: appConfig.theme.colors.primary["000"],
                                 mainColor: appConfig.theme.colors.primary[500],
@@ -112,7 +92,6 @@ function HomePage() {
                         />
                     </Box>
                     {/* Form */}
-
 
                     {/* Photo Area */}
                     <Box
@@ -134,8 +113,9 @@ function HomePage() {
                             styleSheet={{
                                 borderRadius: '50%',
                                 marginBottom: '16px',
+                                height: '166px',
                             }}
-                            src={`https://github.com/${username}.png`}
+                            src={ canEnter ? `https://github.com/${username}.png` : '' }
                         />
                         <Text
                             variant="body4"
