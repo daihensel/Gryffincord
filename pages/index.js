@@ -115,6 +115,7 @@ function HomePage() {
                                 marginBottom: '16px',
                                 height: '166px',
                             }}
+                            alt="Github image"
                             src={canEnter ? `https://github.com/${username}.png` : ''}
                         />
                         <Text
