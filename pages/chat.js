@@ -1,20 +1,44 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import appConfig from '../config.json';
+import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzMyNjMzNiwiZXhwIjoxOTU4OTAyMzM2fQ.tK2fxCVOekMwq6B60aJua7P_3iysP7sSzCNictqQdQM';
+const SUPABASE_URL = 'https://uqwldfjhnpcxgbbnxvpt.supabase.co';
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function ChatPage() {
-    const [message, setMessage] = React.useState('');
-    const [messagesList, setMessagesList] = React.useState([]);
-    const [enterSends, setEnterSend] = React.useState(true);
+    const [message, setMessage] = useState('');
+    const [messagesList, setMessagesList] = useState([]);
+    const [enterSends, setEnterSend] = useState(true);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setLoading(true);
+        supabaseClient
+            .from('messages')
+            .select('*')
+            .order('id', { ascending: false })
+            .then(({ data }) => {
+                setMessagesList(data);
+                setLoading(false);
+            })
+    }, []);
 
     const sendMessage = ((newMessage) => {
         if (newMessage.length) {
+            setLoading(true);
             const _message = {
                 from: 'daihensel',
                 text: newMessage,
-                id: messagesList.length
             }
-            setMessagesList([_message, ...messagesList]);
+
+            supabaseClient.from('messages')
+                .insert(_message)
+                .then(({ data }) => {
+                    setMessagesList([data[0], ...messagesList]);
+                    setLoading(false);
+                });
             setMessage('');
         }
     });
@@ -49,6 +73,7 @@ export default function ChatPage() {
                 }}
             >
                 <Header />
+
                 <Box
                     styleSheet={{
                         position: 'relative',
@@ -62,7 +87,20 @@ export default function ChatPage() {
                         justifyContent: 'flex-end',
                     }}
                 >
-
+                    {loading && (
+                        <Box
+                            styleSheet={{
+                                position: 'relative',
+                                zIndex: 1000,
+                                height: '100%',
+                                backgroundImage: 'url(https://c.tenor.com/mbb_vsQMsVoAAAAC/gryffindor-harrypotter.gif)',
+                                backgroundRepeat: 'no-repeat',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                display: 'block',
+                                borderRadius: '5px',
+                            }}
+                        ></Box>)}
                     <MessageList messages={messagesList} deleteMessage={(messageId) => deleteMessage(messageId)} />
 
                     <Box
@@ -130,6 +168,118 @@ function Header() {
     )
 }
 
+function Popover(props) {
+    const [userData, setUserData] = useState({});
+
+    useEffect(() => {
+        fetch(`https://api.github.com/users/${props.message.from}`).then(async (res) => {
+            let resp = await res.json();
+            if (resp.name) {
+                setUserData(resp);
+            }
+            console.log(userData);
+        });
+    }, [props]);
+
+    return (
+        <>
+            <style global jsx>{`
+                .popover__wrapper:hover .popover__content {
+                    z-index: 1000;
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translate(0, -20px);
+                    transition: all 0.5s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+                }
+            `}</style>
+
+            <Box
+                tag="div"
+                className='popover__wrapper'
+                styleSheet={{
+                    position: 'relative',
+                    display: 'inline-block',
+                }}
+            >
+                <Text
+                    tag="a"
+                    styleSheet={{
+                        textDecoration: 'none',
+                        cursor: 'zoom-in',
+                    }}>
+                    <Text
+                        as="h2"
+                        className="popover__title"
+                        styleSheet={{
+                            fontSize: '24px',
+                            lineHeight: '36px',
+                            textDecoration: 'none',
+                            textAlign: 'center',
+                            padding: '15px 0',
+                        }}
+                    >{props.children}</Text>
+                </Text>
+                <Box
+                    tag="div"
+                    className="popover__content"
+                    styleSheet={{
+                        opacity: 0,
+                        visibility: 'hidden',
+                        position: 'absolute',
+                        left: '0',
+                        transform: 'translate(0, 10px)',
+                        backgroundColor: appConfig.theme.colors.primary[600],
+                        padding: '1.5rem',
+                        boxShadow: '0 2px 5px 0 rgba(0, 0, 0, 0.26)',
+                        width: 'auto',
+                        before: {
+                            position: 'absolute',
+                            zIndex: '-1',
+                            content: "",
+                            right: 'calc(50% - 10px)',
+                            top: '-8px',
+                            borderStyle: 'solid',
+                            borderWidth: '0 10px 10px 10px',
+                            borderColor: 'transparent transparent #bfbfbf transparent',
+                            transitionDuration: '0.3s',
+                            transitionProperty: 'transform',
+                        },
+
+                    }}
+                >
+                    <Image
+                        styleSheet={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            display: 'inline-block',
+                            marginRight: '8px',
+                        }}
+                        alt=""
+                        src={`https://github.com/${props.message.from}.png`}
+                    />
+                    <Text
+                        tag="span"
+                        className="popover__message"
+                        styleSheet={{
+                            textAlign: 'center',
+                        }}
+                    >{props.message.from}</Text>
+                    {!!Object.keys(userData).length && (<Text
+                        tag="span"
+                        styleSheet={{
+                            textAlign: 'center',
+                            display: 'block',
+                        }}
+                    >{userData.name}<br />Following:{userData.following}
+                    </Text>
+                    )}
+                </Box>
+            </Box>
+        </>
+    );
+}
+
 function MessageList(props) {
     const handleDelete = ((messageId) => {
         if (props.deleteMessage) props.deleteMessage(messageId);
@@ -169,30 +319,36 @@ function MessageList(props) {
                             }}
                         >
                             <div className="info">
-                                <Image
-                                    styleSheet={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '50%',
-                                        display: 'inline-block',
-                                        marginRight: '8px',
-                                    }}
-                                    alt=""
-                                    src={`https://github.com/${message.from}.png`}
-                                />
-                                <Text tag="strong">
-                                    {message.from}
-                                </Text>
-                                <Text
-                                    styleSheet={{
-                                        fontSize: '10px',
-                                        marginLeft: '8px',
-                                        color: appConfig.theme.colors.primary[300],
-                                    }}
-                                    tag="span"
-                                >
-                                    {(new Date().toLocaleDateString())}
-                                </Text>
+                                <Popover message={message}>
+                                    <Image
+                                        styleSheet={{
+                                            width: '20px',
+                                            height: '20px',
+                                            borderRadius: '50%',
+                                            display: 'inline-block',
+                                            marginRight: '8px',
+                                        }}
+                                        alt=""
+                                        src={`https://github.com/${message.from}.png`}
+                                    />
+                                    <Text
+                                        tag="strong"
+                                        styleSheet={{
+                                            color: appConfig.theme.colors.primary['000'],
+                                        }}>
+                                        {message.from}
+                                    </Text>
+                                    <Text
+                                        styleSheet={{
+                                            fontSize: '10px',
+                                            marginLeft: '8px',
+                                            color: appConfig.theme.colors.primary[300],
+                                        }}
+                                        tag="span"
+                                    >
+                                        {message.created_at || (new Date().toLocaleDateString())}
+                                    </Text>
+                                </Popover>
                             </div>
                             <div>
                                 <Button
