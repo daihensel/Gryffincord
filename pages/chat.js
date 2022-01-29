@@ -10,6 +10,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5v
 const SUPABASE_URL = 'https://uqwldfjhnpcxgbbnxvpt.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+function listenRealtimeMessages(getData) {
+    return supabaseClient
+        .from('messages')
+        .on('*', () => {
+            getData();
+        })
+        .subscribe();
+}
+
 export default function ChatPage() {
     const routing = useRouter();
     const loggedUser = routing.query.username;
@@ -18,7 +27,7 @@ export default function ChatPage() {
     const [enterSends, setEnterSend] = useState(true);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const getMessagesList = (() => {
         setLoading(true);
         supabaseClient
             .from('messages')
@@ -27,8 +36,16 @@ export default function ChatPage() {
             .then(({ data }) => {
                 setMessagesList(data);
                 setLoading(false);
-            })
+            });
+    });
+
+    useEffect(() => {
+        getMessagesList();
+        listenRealtimeMessages(() => {
+            getMessagesList();
+        });
     }, []);
+
 
     const sendMessage = ((newMessage) => {
         if (newMessage.length) {
@@ -41,10 +58,12 @@ export default function ChatPage() {
             supabaseClient.from('messages')
                 .insert(_message)
                 .then(({ data }) => {
-                    setMessagesList([data[0], ...messagesList]);
-                    setLoading(false);
+                    // setMessagesList([data[0], ...messagesList]);
+                    // setLoading(false);
+                    getMessagesList();
+                    setMessage('');
                 });
-            setMessage('');
+
         }
     });
 
@@ -54,9 +73,10 @@ export default function ChatPage() {
             .delete()
             .match({ id: messageId })
             .then(() => {
-                const _messagesList = messagesList.filter(message => message.id != messageId);
-                setMessagesList([..._messagesList]);
-                setLoading(false);
+                // const _messagesList = messagesList.filter(message => message.id != messageId);
+                // setMessagesList([..._messagesList]);
+                // setLoading(false);
+                getMessagesList();
             });
     });
 

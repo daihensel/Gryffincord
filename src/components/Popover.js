@@ -5,15 +5,14 @@ import appConfig from '../../config.json';
 export function Popover(props) {
   const [userData, setUserData] = useState({});
 
-  useEffect(() => {
-    fetch(`https://api.github.com/users/${props.message.from}`).then(async (res) => {
-      let resp = await res.json();
-      if (resp.name) {
-        setUserData(resp);
-      }
-      console.log(userData);
-    });
-  }, [props]);
+  // useEffect(() => {
+  //   fetch(`https://api.github.com/users/${props.message.from}`).then(async (res) => {
+  //     let resp = await res.json();
+  //     if (resp.name) {
+  //       setUserData(resp);
+  //     }
+  //   });
+  // }, [props]);
 
   return (
     <>
