@@ -44,8 +44,15 @@ export default function ChatPage() {
     });
 
     const deleteMessage = ((messageId) => {
-        const _messagesList = messagesList.filter(message => message.id != messageId);
-        setMessagesList([..._messagesList]);
+        setLoading(true);
+        supabaseClient.from('messages')
+            .delete()
+            .match({ id: messageId })
+            .then(() => {
+                const _messagesList = messagesList.filter(message => message.id != messageId);
+                setMessagesList([..._messagesList]);
+                setLoading(false);
+            });
     });
 
     return (
