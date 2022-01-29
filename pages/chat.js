@@ -1,13 +1,18 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React, { useEffect, useState } from 'react';
 import appConfig from '../config.json';
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/router';
+import { ButtonSendSticker } from '../src/components/ButtonSendSticker';
+import { Popover } from '../src/components/Popover';
 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzMyNjMzNiwiZXhwIjoxOTU4OTAyMzM2fQ.tK2fxCVOekMwq6B60aJua7P_3iysP7sSzCNictqQdQM';
 const SUPABASE_URL = 'https://uqwldfjhnpcxgbbnxvpt.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function ChatPage() {
+    const routing = useRouter();
+    const loggedUser = routing.query.username;
     const [message, setMessage] = useState('');
     const [messagesList, setMessagesList] = useState([]);
     const [enterSends, setEnterSend] = useState(true);
@@ -29,7 +34,7 @@ export default function ChatPage() {
         if (newMessage.length) {
             setLoading(true);
             const _message = {
-                from: 'daihensel',
+                from: loggedUser,
                 text: newMessage,
             }
 
@@ -62,7 +67,7 @@ export default function ChatPage() {
                 backgroundColor: appConfig.theme.colors.primary[500],
                 backgroundImage: 'url(https://wallpaper.dog/large/514209.jpg)',
                 backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundBlendMode: 'multiply',
-                color: appConfig.theme.colors.primary['000']
+                color: appConfig.theme.colors.primary[100]
             }}
         >
             <Box
@@ -72,7 +77,7 @@ export default function ChatPage() {
                     flex: 1,
                     boxShadow: '0 2px 10px 0 rgb(0 0 0 / 20%)',
                     borderRadius: '5px',
-                    backgroundColor: appConfig.theme.colors.primary[100],
+                    backgroundColor: appConfig.theme.colors.primary[500],
                     height: '100%',
                     maxWidth: '95%',
                     maxHeight: '95vh',
@@ -87,7 +92,7 @@ export default function ChatPage() {
                         display: 'flex',
                         flex: 1,
                         height: '80%',
-                        backgroundColor: appConfig.theme.colors.primary[700],
+                        backgroundColor: appConfig.theme.colors.primary[200],
                         flexDirection: 'column',
                         borderRadius: '5px',
                         padding: '16px',
@@ -134,14 +139,20 @@ export default function ChatPage() {
                                 resize: 'none',
                                 borderRadius: '5px',
                                 padding: '6px 8px',
-                                backgroundColor: appConfig.theme.colors.primary[800],
+                                backgroundColor: appConfig.theme.colors.primary[100],
                                 marginRight: '12px',
                                 color: appConfig.theme.colors.primary[200],
                             }}
                         />
+                        <ButtonSendSticker
+                            onStickerClick={(sticker) => {
+                                sendMessage(`:sticker: ${sticker}`)
+                            }}
+                        />
                         <Button
                             styleSheet={{
-                                height: '43px',
+                                marginLeft: '7px',
+                                height: '44px',
                                 borderRadius: '5px',
                                 backgroundColor: appConfig.theme.colors.primary[300],
                                 color: appConfig.theme.colors.primary[200],
@@ -160,7 +171,13 @@ export default function ChatPage() {
 function Header() {
     return (
         <>
-            <Box styleSheet={{ width: '100%', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} >
+            <Box styleSheet={{
+                width: '100%',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+            }} >
                 <Text variant='heading5'>
                     Chat
                 </Text>
@@ -173,118 +190,6 @@ function Header() {
             </Box>
         </>
     )
-}
-
-function Popover(props) {
-    const [userData, setUserData] = useState({});
-
-    useEffect(() => {
-        fetch(`https://api.github.com/users/${props.message.from}`).then(async (res) => {
-            let resp = await res.json();
-            if (resp.name) {
-                setUserData(resp);
-            }
-            console.log(userData);
-        });
-    }, [props]);
-
-    return (
-        <>
-            <style global jsx>{`
-                .popover__wrapper:hover .popover__content {
-                    z-index: 1000;
-                    opacity: 1;
-                    visibility: visible;
-                    transform: translate(0, -20px);
-                    transition: all 0.5s cubic-bezier(0.75, -0.02, 0.2, 0.97);
-                }
-            `}</style>
-
-            <Box
-                tag="div"
-                className='popover__wrapper'
-                styleSheet={{
-                    position: 'relative',
-                    display: 'inline-block',
-                }}
-            >
-                <Text
-                    tag="a"
-                    styleSheet={{
-                        textDecoration: 'none',
-                        cursor: 'zoom-in',
-                    }}>
-                    <Text
-                        as="h2"
-                        className="popover__title"
-                        styleSheet={{
-                            fontSize: '24px',
-                            lineHeight: '36px',
-                            textDecoration: 'none',
-                            textAlign: 'center',
-                            padding: '15px 0',
-                        }}
-                    >{props.children}</Text>
-                </Text>
-                <Box
-                    tag="div"
-                    className="popover__content"
-                    styleSheet={{
-                        opacity: 0,
-                        visibility: 'hidden',
-                        position: 'absolute',
-                        left: '0',
-                        transform: 'translate(0, 10px)',
-                        backgroundColor: appConfig.theme.colors.primary[600],
-                        padding: '1.5rem',
-                        boxShadow: '0 2px 5px 0 rgba(0, 0, 0, 0.26)',
-                        width: 'auto',
-                        before: {
-                            position: 'absolute',
-                            zIndex: '-1',
-                            content: "",
-                            right: 'calc(50% - 10px)',
-                            top: '-8px',
-                            borderStyle: 'solid',
-                            borderWidth: '0 10px 10px 10px',
-                            borderColor: 'transparent transparent #bfbfbf transparent',
-                            transitionDuration: '0.3s',
-                            transitionProperty: 'transform',
-                        },
-
-                    }}
-                >
-                    <Image
-                        styleSheet={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            display: 'inline-block',
-                            marginRight: '8px',
-                        }}
-                        alt=""
-                        src={`https://github.com/${props.message.from}.png`}
-                    />
-                    <Text
-                        tag="span"
-                        className="popover__message"
-                        styleSheet={{
-                            textAlign: 'center',
-                        }}
-                    >{props.message.from}</Text>
-                    {!!Object.keys(userData).length && (<Text
-                        tag="span"
-                        styleSheet={{
-                            textAlign: 'center',
-                            display: 'block',
-                        }}
-                    >{userData.name}<br />Following:{userData.following}
-                    </Text>
-                    )}
-                </Box>
-            </Box>
-        </>
-    );
 }
 
 function MessageList(props) {
@@ -300,7 +205,7 @@ function MessageList(props) {
                 display: 'flex',
                 flexDirection: 'column-reverse',
                 flex: 1,
-                color: appConfig.theme.colors.primary["000"],
+                color: appConfig.theme.colors.primary[100],
                 marginBottom: '16px',
             }}
         >
@@ -314,7 +219,7 @@ function MessageList(props) {
                             padding: '6px',
                             marginBottom: '12px',
                             hover: {
-                                backgroundColor: appConfig.theme.colors.primary[700],
+                                backgroundColor: appConfig.theme.colors.primary[200],
                             }
                         }}
                     >
@@ -341,7 +246,7 @@ function MessageList(props) {
                                     <Text
                                         tag="strong"
                                         styleSheet={{
-                                            color: appConfig.theme.colors.primary['000'],
+                                            color: appConfig.theme.colors.primary[100],
                                         }}>
                                         {message.from}
                                     </Text>
@@ -374,7 +279,21 @@ function MessageList(props) {
                                 />
                             </div>
                         </Box>
-                        {message.text}
+                        {message.text.startsWith(':sticker:') ?
+                            (
+                                <Image
+                                    styleSheet={{
+                                        maxWidth: '150px',
+                                        maxHeight: '150px',
+                                    }}
+                                    alt=""
+                                    src={message.text.replace(':sticker:', '')}
+                                />
+                            ) :
+                            (
+                                message.text
+                            )}
+
                     </Text>
                 );
             })}
